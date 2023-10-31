@@ -1,191 +1,253 @@
-CREATE DATABASE E_Shop_Conect;
+-- EXCLUSÃO DE ENTIDADES
 
-USE E_Shop_Conect;
+DROP database eshop_connect_a;
 
-CREATE TABLE Users ( /*Armazena informações básicas sobre os usuários registrados no sistema, incluindo
-compradores e vendedores.*/
-	id_user int primary key,
-    name varchar(40),
-    phoneNum char(11)
+DROP TABLE users;
+DROP TABLE buyer;
+DROP TABLE Seller;
+DROP TABLE bankCard ;
+DROP TABLE creditCard;
+DROP TABLE debitCard;
+
+DROP TABLE store;
+DROP TABLE brand;
+DROP TABLE product;
+DROP TABLE ordemItem;
+DROP TABLE orders;
+DROP TABLE adress;
+DROP TABLE comments;
+DROP TABLE servicePoint;
+DROP TABLE save_to_Shopping_Cart;
+DROP TABLE contain;
+DROP TABLE payment;
+DROP TABLE deliver_To;
+DROP TABLE manage;
+DROP TABLE After_Sales_Service_At;
+
+
+-- CRIAÇÃO DO BANCO DE DADOS
+
+CREATE DATABASE eshop_connect_a;
+
+USE eshop_connect_a;
+
+
+-- CRIAÇÃO DAS ENTIDADES
+
+CREATE TABLE users(
+	pk_userID			INT NOT NULL AUTO_INCREMENT,
+    name			VARCHAR(40) NOT NULL,
+    phoneNumber		VARCHAR(12),
+    
+    PRIMARY KEY (pk_userID)
+    
+);
+
+CREATE TABLE buyer(
+	pk_userID			INT NOT NULL AUTO_INCREMENT,
+    
+    PRIMARY KEY (pk_userID),
+    FOREIGN KEY (pk_userID) REFERENCES users(pk_userID)
+);
+
+CREATE TABLE seller(
+	pk_userID			INT NOT NULL AUTO_INCREMENT,
+    
+    PRIMARY KEY (pk_userID),
+    FOREIGN KEY (pk_userID) REFERENCES users(pk_userID)
+);
+
+CREATE TABLE bankCard(
+	pk_cardNumber		CHAR(19) NOT NULL,
+    expiryDate			DATE NOT NULL,
+    bank				VARCHAR(20),
+    
+    PRIMARY KEY (pk_cardNumber)
+);
+
+-- alter table bankCard update pk_cardNumber CHAR(19) NOT NULL;
+
+CREATE TABLE creditCard(
+	pk_cardNumber		CHAR(19) NOT NULL,
+    fk_userID			INT NOT NULL,
+	organization		VARCHAR(50),
+    
+    PRIMARY KEY (pk_cardNumber),
+    FOREIGN KEY (pk_cardNumber) REFERENCES bankCard(pk_cardNumber),
+    FOREIGN KEY (fk_userid) REFERENCES users(pk_userID)
+);
+
+-- Desabilita as verificações de FKS
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ALTERA O TIPO DE DADO DA FK DA TABELA BANK CARD
+ALTER TABLE store
+MODIFY COLUMN startTime DATE; 
+
+-- Habilita as verificações de FKS
+SET FOREIGN_KEY_CHECKS = 1;
+
+CREATE TABLE debitCard(
+	pk_cardNumber		CHAR(19) NOT NULL,
+    fk_userID			INT NOT NULL,
+	organization		VARCHAR(50),
+    
+    PRIMARY KEY (pk_cardNumber),
+    FOREIGN KEY (pk_cardNumber) REFERENCES bankCard(pk_cardNumber),
+    FOREIGN KEY (fk_userid) REFERENCES users(pk_userID)
+);
+
+CREATE TABLE store(
+	pk_sid 				INT NOT NULL,
+    name				VARCHAR(50) NOT NULL,
+    province			VARCHAR(35) NOT NULL,
+    city				VARCHAR(40) NOT NULL,
+    streetaddr 			VARCHAR(30),
+    customderGrade		INT,
+    startTime			DATE,
+    
+    PRIMARY KEY (pk_sid)
+);
+
+CREATE TABLE brand(
+	pk_brandName		VARCHAR(50) NOT NULL,
+    
+    PRIMARY KEY 		(pk_brandName)
+);
+
+CREATE TABLE product(
+	pk_pid				INT NOT NULL,
+    fk_sid				INT NOT NULL,
+    name				VARCHAR(120) NOT NULL,
+    fk_brandName		VARCHAR(50) NOT NULL,
+	type				VARCHAR(50),
+    amount				INT DEFAULT NULL,
+    price				DECIMAL(6,2) NOT NULL,
+    color				VARCHAR(20),
+    modelNumber			VARCHAR(50),
+    
+    PRIMARY KEY (pk_pid),
+    FOREIGN KEY (fk_sid) REFERENCES	store(pk_sid),
+    FOREIGN KEY (fk_brandName) REFERENCES brand(pk_brandName)
+);
+
+CREATE TABLE ordemitem(
+	pk_itemID 			INT NOT NULL AUTO_INCREMENT,
+    fk_pid 				INT NOT NULL,
+    price				DECIMAL(6,2),
+    creationTime		TIME NOT NULL,
+    
+    PRIMARY KEY (pk_itemID),
+    FOREIGN KEY (fk_pid) REFERENCES product(pk_pid)
+);
+
+CREATE TABLE orders(
+	pk_orderNumber		INT NOT NULL,
+    payment_state		ENUM('Paid','Unpaid'),
+    creation_time		TIME NOT NULL,
+    totalAmount			DECIMAL(10,2),
+    
+    PRIMARY KEY 		(pk_orderNumber)
+);
+
+CREATE TABLE adress(
+	pk_addID			INT NOT NULL,
+    fk_userID			INT NOT NULL,
+    name				VARCHAR(50),
+    contactPhoneNumber	VARCHAR(20),
+    province			VARCHAR(100),
+    city				VARCHAR(100),
+    streetaddr			VARCHAR(100),
+    postCode			VARCHAR(12),
+    
+    PRIMARY KEY (pk_addID),
+    FOREIGN KEY	(fk_userID) REFERENCES users(pk_userID)
+);
+
+CREATE TABLE comments( -- Entidade fraca
+	creationTime		DATE NOT NULL,
+    fk_userID			INT NOT NULL,
+    fk_pid				INT NOT NULL,
+    grade				FLOAT,
+    content				VARCHAR(500),
+    
+    PRIMARY KEY (creationTime, fk_userID, fk_pid),
+    FOREIGN KEY (fk_userID) REFERENCES users(pk_userID),
+    FOREIGN KEY (fk_pid) REFERENCES	product(pk_pid)
     );
+
+
+CREATE TABLE servicePoint(
+	pk_sid				INT NOT NULL,
+    streetaddr			VARCHAR(100) NOT NULL,
+    city				VARCHAR(50),
+    province			VARCHAR(50),
+    startTime			VARCHAR(20),
+    endTime				VARCHAR(20),
     
-CREATE TABLE Buyer( /* Relaciona os usuários como compradores*/
-	Buyer int,
-    fk_id_user int,
+    PRIMARY KEY (pk_sid)
+);
+
+CREATE TABLE save_to_Shopping_Cart(
+	fk_userID			INT NOT NULL,
+    fk_pid				INT NOT NULL,
+    addTime				DATE NOT NULL,
+    quantity			INT,
     
-    foreign key (fk_id_user) references users(id_user)
-    );
+    PRIMARY KEY(fk_userID, fk_pid),
+    FOREIGN KEY (fk_userID) REFERENCES users(pk_userID),
+    FOREIGN KEY (fk_pid) REFERENCES product(pk_pid)
+);
+
+CREATE TABLE contain(
+	fk_orderNumber		INT NOT NULL,
+    fk_itemID			INT NOT NULL,
+    quantity			INT,
     
-CREATE TABLE Seller( /*Relaciona os usuários como vendedores*/
-	Seller int,
-    fk_id_user int,
+    PRIMARY KEY (fk_orderNumber, fk_itemID),
+    FOREIGN KEY (fk_orderNumber) REFERENCES orders(pk_orderNumber),
+    FOREIGN KEY (fk_itemID) REFERENCES ordemItem(pk_itemID)
+);
+
+CREATE TABLE payment(
+	fk_orderNumber		INT NOT NULL,
+    fk_creditcardNumber	VARCHAR(25) NOT NULL,
+    payTime				DATE,
     
-    foreign key (fk_id_user) references users(id_user)
+    PRIMARY KEY (fk_orderNumber, fk_creditcardNumber),
+    FOREIGN KEY (fk_orderNumber) REFERENCES orders(pk_orderNumber),
+    FOREIGN KEY (fk_creditcardNumber) REFERENCES bankCard(pk_cardNumber)
 );
 
-CREATE TABLE Bank_Card (
-    id_card_number CHAR(16) PRIMARY KEY,
-    fk_id_user INT,
-    bank VARCHAR(60),
-    expiryDate DATE,
-    id_organization VARCHAR(30),
-    FOREIGN KEY (fk_id_user)
-        REFERENCES users (id_user)
-);
-
-CREATE TABLE Credt_Card ( /*Armazena informações específicas sobre os cartões de crédito*/
-	fk_id_user int,
-	fk_card_number char(16),
-    fk_organization varchar(30),
+CREATE TABLE deliver_To(
+    fk_addID            INT NOT NULL,
+    fk_orderNumber         INT NOT NULL,
+    TimeDelivered         DATE,
     
-    foreign key (fk_id_user) references users(id_user),
-    foreign key (fk_card_number) references Bank_Card(id_card_number),
-    foreign key (fk_organization) references Bank_Card(id_organization)
+    PRIMARY KEY(fk_addID,fk_orderNumber),
+    FOREIGN KEY(fk_addID) REFERENCES adress(pk_addID),
+    FOREIGN KEY(fk_orderNumber) REFERENCES orders(pk_orderNumber)
 );
 
-CREATE TABLE Debit_Card( /*Armazena informações específicas sobre os cartões de débito*/
-	fk_id_user int,
-	fk_card_number char(16),
-    fk_organization varchar(30),
+ 
+
+CREATE TABLE manage (
+    fk_userid             INT NOT NULL,
+    fk_sid                 INT NOT NULL,
+    setUpTime             DATE,
     
-    foreign key (fk_id_user) references users(id_user),
-    foreign key (fk_card_number) references Bank_Card(id_card_number),
-    foreign key (fk_organization) references Bank_Card(id_organization)
+    PRIMARY KEY(fk_userid,fk_sid),
+    FOREIGN KEY(fk_userid) REFERENCES seller(pk_userid),
+    FOREIGN KEY(fk_sid) REFERENCES store (pk_sid)
 );
 
-CREATE TABLE Store( /*Representa informações sobre as lojas que vendem os produtos*/
-	id_sid int primary key,
-    name varchar(60),
-    startTime time,
-    customerGrade int(1),
-    streetAddr varchar(40),
-    city varchar(40),
-    province varchar(40)
-);
 
-CREATE TABLE Product( /*Armazena detalhes sobre os produtos oferecidos pelas lojas*/
-	id_pid int primary key,
-    fk_sid int, 
-    name varchar(60),
-    brand varchar(40),
-    type varchar(40),
-    amount int,
-    price decimal(3,2),
-    color varchar(20),
-    modelNumber int,
+
+CREATE TABLE After_Sales_Service_At(
+    fk_brandName         VARCHAR(20) NOT NULL,
+    fk_sid             INT NOT NULL,
     
-    foreign key (kf_sid) references Store(id_sid)
+    PRIMARY KEY(fk_brandName, fk_sid),
+    FOREIGN KEY(fk_brandName) REFERENCES brand (pk_brandName),
+    FOREIGN KEY(fk_sid) REFERENCES servicePoint(pk_sid)
 );
-
-CREATE TABLE Item( /*Registra os itens individuais presentes em um pedido junto com seus preços*/
-	id_item int primary key,
-    pk_pid int,
-	fk_price decimal(3,2),
-    creationTime time,
-    
-    
-    foreign key (kf_price) references Product(price),
-    foreign key (kf_pid) references Product(id_pid)
-);
-
-
-CREATE TABLE Orders( /*Registra informações sobre os pedidos feitos pelos compradores, incluindo status de
-pagamento e valor total.
-*/
-	orderNumber int primary key,
-    creatiomTime  time,
-    paymentStatus int(1), -- 1 = ativo, 2 = inativo
-    totalAmount decimal (4,2)
-);
-
-CREATE TABLE Tabela_Address( /* Armazena os endereços de entrega dos compradores.
-*/
-	id_addr int primary key,
-    fk_id_user int,
-    name varchar(40),
-    city varchar(40),
-    postalCode char(8),
-    streetAddr varchar(50),
-    province varchar (40),
-    
-    foreign key (fk_id_user) references users(id_user)
-);
-
-CREATE TABLE Tabela_Brand ( /*Armazena os nomes das marcas do produtos*/
-	brandName varchar(40)
-);
-
-CREATE TABLE Comments (
-    creationTime datetime NOT NULL,
-    fk_userid int,
-    fk_pid int,
-    grade float,
-    content varchar(500),
-    
-    FOREIGN KEY (fk_userid) REFERENCES Buyer(Buyer), -- Referencia a tabela "Buyer" pelo Buyer.
-    FOREIGN KEY (fk_pid) REFERENCES Product(id_pid) -- Referencia a tabela "Product" pelo id_pid.
-);
-
-CREATE TABLE ServicePoint (
-    spid int PRIMARY KEY,
-    streetAddr varchar(40),
-    city varchar(30),
-    province varchar(20),
-    startTime time,
-    endTime time
-);
-
-CREATE TABLE Save_to_ShoppingCart (
-    fk_userid int,
-    fk_pid int,
-    addTime datetime,
-    quantity int,
-    
-    FOREIGN KEY (fk_userid) REFERENCES Buyer(Buyer), -- Referencia a tabela "Buyer" pelo Buyer.
-    FOREIGN KEY (fk_pid) REFERENCES Product(id_pid) -- Referencia a tabela "Product" pelo id_pid.
-);
-
-CREATE TABLE Contain (
-    fk_orderNumber int,
-    fk_itemid int,
-    quantity int,
-    
-    FOREIGN KEY (fk_orderNumber) REFERENCES Orders(orderNumber), -- Referencia a tabela "Orders" pelo orderNumber.
-    FOREIGN KEY (fk_itemid) REFERENCES Item(id_item) -- Referencia a tabela "Item" pelo id_item.
-);
-
-CREATE TABLE Payment (
-    fk_orderNumber int,
-    creditcardNumber varchar(25),
-    payTime datetime,
-    
-    FOREIGN KEY (fk_orderNumber) REFERENCES Orders(orderNumber), -- Referencia a tabela "Orders" pelo orderNumber.
-    FOREIGN KEY (creditcardNumber) REFERENCES Credit_Card(fk_card_number) -- Referencia a tabela "Credit_Card" pelo fk_card_number.
-);
-
-CREATE TABLE Deliver_To (
-    fk_addrid int,
-    fk_orderNumber int,
-    TimeDelivered datetime,
-    
-    FOREIGN KEY (fk_addrid) REFERENCES Tabela_Address(id_addr), -- Referencia a tabela "Tabela_Address" pelo id_addr.
-    FOREIGN KEY (fk_orderNumber) REFERENCES Orders(orderNumber) -- Referencia a tabela "Orders" pelo orderNumber.
-);
-
-CREATE TABLE Manage (
-    fk_userid int,
-    fk_sid int,
-    SetUpTime datetime,
-    
-    FOREIGN KEY (fk_userid) REFERENCES Seller(Seller), -- Referencia a tabela "Seller" pelo Seller.
-    FOREIGN KEY (fk_sid) REFERENCES Store(id_sid) -- Referencia a tabela "Store" pelo id_sid.
-);
-
-CREATE TABLE After_Sales_Service_At (
-    brandName varchar(20) NOT NULL,
-    fk_spid int,
-    
-    PRIMARY KEY (brandName, fk_spid),
-    FOREIGN KEY (fk_spid) REFERENCES ServicePoint(spid) -- Referencia a tabela "ServicePoint" pelo spid.
-);
-
